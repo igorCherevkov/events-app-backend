@@ -16,7 +16,7 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: false,
       },
-      isPublished: {
+      publication: {
         type: Sequelize.BOOLEAN,
         defaultValue: true,
       },

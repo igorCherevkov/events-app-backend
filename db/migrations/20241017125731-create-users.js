@@ -30,7 +30,7 @@ module.exports = {
         type: Sequelize.ENUM('user', 'admin'),
         defaultValue: 'user',
       },
-      isConfirmed: {
+      confirmation: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
       },

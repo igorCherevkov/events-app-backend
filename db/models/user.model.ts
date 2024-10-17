@@ -15,7 +15,7 @@ export default class User extends Model<User> {
   role: Roles;
 
   @Column({ defaultValue: false })
-  isConfirmed: boolean;
+  confirmation: boolean;
 
   @HasMany(() => Booking)
   bookings: Booking[];

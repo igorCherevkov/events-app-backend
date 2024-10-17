@@ -19,7 +19,7 @@ export default class Event extends Model<Event> {
   description: string;
 
   @Column({ defaultValue: true })
-  isPublished: boolean;
+  publication: boolean;
 
   @Column({ allowNull: false })
   date: Date;
