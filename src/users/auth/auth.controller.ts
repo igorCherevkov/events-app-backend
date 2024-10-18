@@ -31,7 +31,6 @@ export class AuthController {
   }
 
   @Get('confirm')
-  @UseGuards(JwtAuthGuard)
   confirmEmail(@Query('token') token: string): Promise<string> {
     return this.authService.confirmEmail(token);
   }

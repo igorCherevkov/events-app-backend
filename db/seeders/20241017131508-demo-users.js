@@ -5,7 +5,7 @@ module.exports = {
     return queryInterface.bulkInsert('users', [
       {
         email: 'user1@mail.ru',
-        password: 'password1',
+        password: 'password1', // только нужны хешированные пароли
         role: 'user',
         confirmation: true,
         created_at: new Date(),

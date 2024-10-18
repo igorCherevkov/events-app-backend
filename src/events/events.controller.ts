@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Patch,
@@ -20,9 +21,11 @@ import { Roles } from 'src/types/users.types';
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Get()
-  getAllEvents(): Promise<Event[]> {
-    return this.eventsService.getAllEvents();
+  @Get(':userId')
+  getAllEvents(
+    @Param('userId', ParseIntPipe) userId: number,
+  ): Promise<Event[]> {
+    return this.eventsService.getAllEvents(userId);
   }
 
   @Post()
@@ -34,6 +37,7 @@ export class EventsController {
   }
 
   @Get(':id')
+  //   @UseGuards(JwtAuthGuard)
   getEventsForUser(
     @Param('id', ParseIntPipe) userId: number,
   ): Promise<Event[]> {
@@ -41,17 +45,38 @@ export class EventsController {
   }
 
   @Delete(':id/:eventId')
+  //   @UseGuards(JwtAuthGuard)
   unsubscribeFromEvent(
     @Param('id', ParseIntPipe) userId: number,
     @Param('eventId', ParseIntPipe) eventId: number,
-  ) {
+  ): Promise<string> {
     return this.eventsService.unsubscribeFromEvent(userId, eventId);
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @RolesDecorator(Roles.admin)
-  changeEvent(@Param('id', ParseIntPipe) eventId: number) {
-    return this.eventsService.changeEvent();
+  //   @UseGuards(JwtAuthGuard, RolesGuard)
+  //   @RolesDecorator(Roles.admin)
+  changeEvent(
+    @Param('id', ParseIntPipe) eventId: number,
+    @Body() body: { publication?: boolean; categoryIds?: number[] },
+  ): Promise<Event> {
+    if (typeof body.publication !== 'undefined')
+      return this.eventsService.changeEventStatus(eventId, body.publication);
+
+    if (body.categoryIds) {
+      return this.eventsService.updateEventCategories(
+        eventId,
+        body.categoryIds,
+      );
+    }
+
+    throw new NotFoundException('body not found');
+  }
+
+  @Delete(':id')
+  //   @UseGuards(JwtAuthGuard, RolesGuard)
+  //   @RolesDecorator(Roles.admin)
+  deleteEvent(@Param('id', ParseIntPipe) eventId: number): Promise<string> {
+    return this.eventsService.deleteEvent(eventId);
   }
 }

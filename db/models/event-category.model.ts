@@ -6,9 +6,9 @@ import { Event, Category } from './';
 export default class EventCategory extends Model<EventCategory> {
   @ForeignKey(() => Event)
   @Column
-  eventId: string;
+  eventId: number;
 
   @ForeignKey(() => Category)
   @Column
-  categoryId: string;
+  categoryId: number;
 }
