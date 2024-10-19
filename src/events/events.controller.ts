@@ -21,31 +21,42 @@ import { Roles } from 'src/types/users.types';
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Get(':userId')
-  getAllEvents(
-    @Param('userId', ParseIntPipe) userId: number,
-  ): Promise<Event[]> {
-    return this.eventsService.getAllEvents(userId);
+  //
+  @Get()
+  getAllEvents(): Promise<Event[]> {
+    return this.eventsService.getAllEvents();
   }
 
-  @Post()
+  @Post('create-event')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RolesDecorator(Roles.admin)
+  createEvent(
+    @Body() body: { name: string; description: string },
+  ): Promise<Event> {
+    return this.eventsService.createEvent(body.name, body.description);
+  }
+
+  //
+  @Post('sign-to-event')
   @UseGuards(JwtAuthGuard)
   signUpForEvent(
     @Body() body: { userId: number; eventId: number },
-  ): Promise<Booking> {
+  ): Promise<Event> {
     return this.eventsService.signUpForEvent(body.userId, body.eventId);
   }
 
+  //
   @Get(':id')
-  //   @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   getEventsForUser(
     @Param('id', ParseIntPipe) userId: number,
   ): Promise<Event[]> {
     return this.eventsService.getEventsForUser(userId);
   }
 
+  //
   @Delete(':id/:eventId')
-  //   @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   unsubscribeFromEvent(
     @Param('id', ParseIntPipe) userId: number,
     @Param('eventId', ParseIntPipe) eventId: number,
@@ -54,14 +65,29 @@ export class EventsController {
   }
 
   @Patch(':id')
-  //   @UseGuards(JwtAuthGuard, RolesGuard)
-  //   @RolesDecorator(Roles.admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RolesDecorator(Roles.admin)
   changeEvent(
     @Param('id', ParseIntPipe) eventId: number,
-    @Body() body: { publication?: boolean; categoryIds?: number[] },
+    @Body()
+    body: {
+      name?: string;
+      description?: string;
+      publication?: boolean;
+      categoryIds?: number[];
+    },
   ): Promise<Event> {
-    if (typeof body.publication !== 'undefined')
-      return this.eventsService.changeEventStatus(eventId, body.publication);
+    if (
+      typeof body.publication !== 'undefined' ||
+      body.name ||
+      body.description
+    )
+      return this.eventsService.changeEventInfo(
+        eventId,
+        body.name,
+        body.description,
+        body.publication,
+      );
 
     if (body.categoryIds) {
       return this.eventsService.updateEventCategories(
@@ -73,9 +99,10 @@ export class EventsController {
     throw new NotFoundException('body not found');
   }
 
+  //
   @Delete(':id')
-  //   @UseGuards(JwtAuthGuard, RolesGuard)
-  //   @RolesDecorator(Roles.admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RolesDecorator(Roles.admin)
   deleteEvent(@Param('id', ParseIntPipe) eventId: number): Promise<string> {
     return this.eventsService.deleteEvent(eventId);
   }

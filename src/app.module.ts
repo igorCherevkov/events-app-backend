@@ -5,11 +5,13 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { Booking, Category, Event, EventCategory, User } from '../db/models';
 import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
     UsersModule,
     EventsModule,
+    CategoriesModule,
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],

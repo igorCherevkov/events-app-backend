@@ -70,6 +70,17 @@ Check out a few resources that may come in handy when working with NestJS:
 - To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
 - Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
 
+# environment variables
+
+$ set -a && source .env && set +a
+$ npx dotenv -e .env -- npx sequelize-cli db:migrate
+$ npx dotenv -e .env -- npm run start:dev
+
+# migrations
+
+$ npx sequelize-cli db:migrate
+$ npx sequelize-cli db:migrate:undo
+
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).

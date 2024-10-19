@@ -41,6 +41,7 @@ export class AuthService {
       id: newUser.id,
       email: newUser.email,
       role: newUser.role,
+      confirmation: newUser.confirmation,
     });
 
     await this.mailService.sendConfirmation(newUser.email, token.token);
@@ -54,14 +55,17 @@ export class AuthService {
     try {
       const decodedUser = this.jwtService.verify(token);
 
-      const user = await this.userModel.findByPk(decodedUser.id);
+      const user = await this.userModel.findOne({
+        where: { id: decodedUser.id },
+        attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
+      });
 
       if (!user) throw new NotFoundException('user not found');
 
       user.confirmation = true;
       await user.save();
 
-      return 'email confirmed successfully';
+      return 'success';
     } catch (error) {
       throw new BadRequestException('invalid or expired token');
     }
@@ -82,12 +86,12 @@ export class AuthService {
   async profile(user: User): Promise<User> {
     return this.userModel.findOne({
       where: { id: user.id },
-      attributes: { exclude: ['created_at', 'updated_at', 'password'] },
+      attributes: { exclude: ['createdAt', 'updatedAt', 'password'] },
     });
   }
 
   async generateToken(user: RequestingData): Promise<ReturningData> {
-    const { id, email, role } = user;
+    const { id, email, confirmation, role } = user;
 
     const token = this.jwtService.sign({
       id: user.id,
@@ -99,6 +103,7 @@ export class AuthService {
       id,
       email,
       role,
+      confirmation,
       token,
     };
   }

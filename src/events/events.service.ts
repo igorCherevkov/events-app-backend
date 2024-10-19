@@ -15,22 +15,19 @@ export class EventsService {
     private eventCategoryModel: typeof EventCategory,
   ) {}
 
-  async getAllEvents(userId: number): Promise<Event[]> {
-    const user = await this.userModel.findByPk(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const isAdmin = user.role === Roles.admin;
-
+  async getAllEvents(): Promise<Event[]> {
     return this.eventsModel.findAll({
-      where: isAdmin ? {} : { publication: true },
+      where: { publication: true },
       attributes: { exclude: ['createdAt', 'updatedAt', 'publication'] },
       include: [{ model: Category, attributes: { include: ['id', 'name'] } }],
     });
   }
 
-  async signUpForEvent(userId: number, eventId: number): Promise<Booking> {
+  async createEvent(name: string, description: string): Promise<Event> {
+    return this.eventsModel.create({ name, description });
+  }
+
+  async signUpForEvent(userId: number, eventId: number): Promise<Event> {
     const user = await this.userModel.findByPk(userId);
     if (!user) throw new NotFoundException('user not found');
 
@@ -42,16 +39,25 @@ export class EventsService {
     });
     if (existingBooking) throw new Error('already signed up for this event');
 
-    return this.bookingModel.create({ userId, eventId });
+    await this.bookingModel.create({ userId, eventId });
+
+    return this.eventsModel.findOne({
+      where: { id: eventId },
+      attributes: { exclude: ['createdAt', 'updatedAt', 'publication'] },
+      include: [{ model: Category, attributes: { include: ['id', 'name'] } }],
+    });
   }
 
   async getEventsForUser(userId: number): Promise<Event[]> {
+    const user = await this.userModel.findOne({ where: { id: userId } });
+    const isAdmin = user.role === Roles.admin;
+
     const bookings = await this.bookingModel.findAll({ where: { userId } });
 
     const eventsIds = bookings.map((booking) => booking.eventId);
 
     return this.eventsModel.findAll({
-      where: { id: eventsIds },
+      where: isAdmin ? {} : { id: eventsIds },
       attributes: { exclude: ['createdAt', 'updatedAt', 'publication'] },
       include: [{ model: Category, attributes: { include: ['id', 'name'] } }],
     });
@@ -69,15 +75,20 @@ export class EventsService {
     return 'booking deleted';
   }
 
-  async changeEventStatus(
+  async changeEventInfo(
     eventId: number,
+    name: string,
+    description: string,
     publication: boolean,
   ): Promise<Event> {
     const event = await this.eventsModel.findByPk(eventId);
 
     if (!event) throw new NotFoundException('event not found');
 
-    event.publication = publication;
+    if (name) event.name = name;
+    if (description) event.description = description;
+    if (publication) event.publication = publication;
+
     await event.save();
 
     return event;
