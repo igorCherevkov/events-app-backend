@@ -3,16 +3,17 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
   ParseIntPipe,
   Patch,
   Post,
+  Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 
 import { EventsService } from './events.service';
-import { Booking, Event } from '../../db/models';
+import { Event } from '../../db/models';
 import { JwtAuthGuard } from 'src/users/auth/guards/jwt-auth.guard';
 import { RolesDecorator, RolesGuard } from 'src/users/auth/guards/roles.guard';
 import { Roles } from 'src/types/users.types';
@@ -21,13 +22,23 @@ import { Roles } from 'src/types/users.types';
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  //
   @Get()
   getAllEvents(): Promise<Event[]> {
     return this.eventsService.getAllEvents();
   }
 
-  //
+  @Get('search')
+  searchEvents(
+    @Request() req,
+    @Query('query') query: string,
+  ): Promise<Event[]> {
+    let userId = null;
+    if (req.user) {
+      userId = req.user.id;
+    }
+    return this.eventsService.searchEvents(query, userId);
+  }
+
   @Post('create-event')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RolesDecorator(Roles.admin)
@@ -41,7 +52,6 @@ export class EventsController {
     );
   }
 
-  //
   @Post('sign-to-event')
   @UseGuards(JwtAuthGuard)
   signUpForEvent(
@@ -50,7 +60,6 @@ export class EventsController {
     return this.eventsService.signUpForEvent(body.userId, body.eventId);
   }
 
-  //
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   getEventsForUser(
@@ -59,7 +68,6 @@ export class EventsController {
     return this.eventsService.getEventsForUser(userId);
   }
 
-  //
   @Delete(':id/:eventId')
   @UseGuards(JwtAuthGuard)
   unsubscribeFromEvent(
@@ -69,7 +77,6 @@ export class EventsController {
     return this.eventsService.unsubscribeFromEvent(userId, eventId);
   }
 
-  //
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RolesDecorator(Roles.admin)
@@ -101,7 +108,6 @@ export class EventsController {
       );
   }
 
-  //
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RolesDecorator(Roles.admin)

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 
 import { Booking, Category, Event, EventCategory, User } from '../../db/models';
 import { Roles } from '../../src/types/users.types';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class EventsService {
@@ -20,6 +21,25 @@ export class EventsService {
       where: { publication: true },
       attributes: { exclude: ['createdAt', 'updatedAt', 'publication'] },
       include: [{ model: Category, attributes: { include: ['id', 'name'] } }],
+    });
+  }
+
+  async searchEvents(query: string, userId: number | null): Promise<Event[]> {
+    let user = null;
+    if (userId) user = await this.userModel.findByPk(userId);
+    if (!user && !(user == null)) throw new NotFoundException('user not found');
+
+    const isAdmin = user && user.role === Roles.admin;
+
+    return this.eventsModel.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${query}%`,
+        },
+        ...(isAdmin ? {} : { publication: true }),
+      },
+      attributes: { exclude: ['createdAt', 'updatedAt', 'publication'] },
+      include: [{ model: Category, attributes: ['id', 'name'] }],
     });
   }
 
