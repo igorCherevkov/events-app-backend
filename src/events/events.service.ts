@@ -24,7 +24,13 @@ export class EventsService {
   }
 
   async createEvent(name: string, description: string): Promise<Event> {
-    return this.eventsModel.create({ name, description });
+    const newEvent = await this.eventsModel.create({ name, description });
+
+    return this.eventsModel.findOne({
+      where: { id: newEvent.id },
+      attributes: { exclude: ['createdAt', 'updatedAt', 'publication'] },
+      include: [{ model: Category, attributes: { include: ['id', 'name'] } }],
+    });
   }
 
   async signUpForEvent(userId: number, eventId: number): Promise<Event> {
@@ -79,42 +85,49 @@ export class EventsService {
     eventId: number,
     name: string,
     description: string,
+    date: string,
     publication: boolean,
+    categoryNames: string[],
   ): Promise<Event> {
-    const event = await this.eventsModel.findByPk(eventId);
+    const event = await this.eventsModel.findOne({
+      where: { id: eventId },
+      attributes: { exclude: ['createdAt', 'updatedAt', 'publication'] },
+      include: [{ model: Category, attributes: { include: ['id', 'name'] } }],
+    });
 
     if (!event) throw new NotFoundException('event not found');
 
     if (name) event.name = name;
+    if (date) event.date = new Date(date);
     if (description) event.description = description;
-    if (publication) event.publication = publication;
+    if (publication != null && publication != undefined)
+      event.publication = publication;
+    if (categoryNames) {
+      await this.eventCategoryModel.destroy({ where: { eventId } });
+
+      const categories = await Promise.all(
+        categoryNames.map(async (name) => {
+          let category = await this.categoryModel.findOne({
+            where: { name },
+          });
+
+          if (!category) {
+            category = await this.categoryModel.create({ name });
+          }
+
+          return category;
+        }),
+      );
+
+      for (const category of categories) {
+        await this.eventCategoryModel.create({
+          eventId,
+          categoryId: category.id,
+        });
+      }
+    }
 
     await event.save();
-
-    return event;
-  }
-
-  async updateEventCategories(
-    eventId: number,
-    categoryIds: number[],
-  ): Promise<Event> {
-    const event = await this.eventsModel.findByPk(eventId);
-
-    if (!event) throw new NotFoundException('event not found');
-
-    await this.eventCategoryModel.destroy({ where: { eventId } });
-
-    const categories = await this.categoryModel.findAll({
-      where: { id: categoryIds },
-    });
-
-    if (categories.length !== categoryIds.length) {
-      throw new NotFoundException('categories not found');
-    }
-
-    for (const categoryId of categoryIds) {
-      await this.eventCategoryModel.create({ eventId, categoryId });
-    }
 
     return event;
   }

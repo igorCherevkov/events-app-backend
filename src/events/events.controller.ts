@@ -64,6 +64,7 @@ export class EventsController {
     return this.eventsService.unsubscribeFromEvent(userId, eventId);
   }
 
+  //
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RolesDecorator(Roles.admin)
@@ -74,29 +75,25 @@ export class EventsController {
       name?: string;
       description?: string;
       publication?: boolean;
-      categoryIds?: number[];
+      date?: string;
+      categoryNames?: string[];
     },
   ): Promise<Event> {
     if (
       typeof body.publication !== 'undefined' ||
       body.name ||
-      body.description
+      body.description ||
+      body.date ||
+      body.categoryNames
     )
       return this.eventsService.changeEventInfo(
         eventId,
         body.name,
         body.description,
+        body.date,
         body.publication,
+        body.categoryNames,
       );
-
-    if (body.categoryIds) {
-      return this.eventsService.updateEventCategories(
-        eventId,
-        body.categoryIds,
-      );
-    }
-
-    throw new NotFoundException('body not found');
   }
 
   //
