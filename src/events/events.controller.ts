@@ -27,13 +27,18 @@ export class EventsController {
     return this.eventsService.getAllEvents();
   }
 
+  //
   @Post('create-event')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RolesDecorator(Roles.admin)
   createEvent(
-    @Body() body: { name: string; description: string },
+    @Body() body: { name: string; description: string; date: string },
   ): Promise<Event> {
-    return this.eventsService.createEvent(body.name, body.description);
+    return this.eventsService.createEvent(
+      body.name,
+      body.description,
+      body.date,
+    );
   }
 
   //

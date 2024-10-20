@@ -23,8 +23,17 @@ export class EventsService {
     });
   }
 
-  async createEvent(name: string, description: string): Promise<Event> {
-    const newEvent = await this.eventsModel.create({ name, description });
+  async createEvent(
+    name: string,
+    description: string,
+    date: string,
+  ): Promise<Event> {
+    const newDate = new Date(date);
+    const newEvent = await this.eventsModel.create({
+      name,
+      description,
+      date: newDate,
+    });
 
     return this.eventsModel.findOne({
       where: { id: newEvent.id },

@@ -10,13 +10,13 @@ export class UsersService {
     return await this.userModel.findOne({ where: { email } });
   }
 
-  async deleteUser(userId: number): Promise<string> {
+  async deleteUser(userId: number): Promise<User> {
     const user = await this.userModel.findByPk(userId);
 
     if (!user) throw new NotFoundException('user not found');
 
     await user.destroy();
 
-    return 'user deleted';
+    return user;
   }
 }
